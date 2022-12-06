@@ -59,3 +59,4 @@ for symbol_string in symbol_strings:
         )
 print(final_dataframe)
 
+final_dataframe.sort_value('One-Year Price Return', ascending = False, inplace = True,) #with the inplace method it will modeify the actual dataframe
