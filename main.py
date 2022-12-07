@@ -73,7 +73,15 @@ def portfolio_input():
         float(portfolio_size)
     except ValueError:
         print('That is not a number! \nPLeasetry again:')
-        portfolio_size = input('Enter the size of your portfolio')
+        portfolio_size = input('Enter the size of your portfolio:')
 
-print(portfolio_input())
+portfolio_input()
 print(portfolio_size)
+
+
+position_size = float(portfolio_size)/len(final_dataframe.index)
+for i in range(0, len(final_dataframe)):
+    final_dataframe.loc[i, 'Number of Shares to Buy '] = math.floor(position_size/final_dataframe.loc[i, 'Price'])
+
+print(final_dataframe)
+
