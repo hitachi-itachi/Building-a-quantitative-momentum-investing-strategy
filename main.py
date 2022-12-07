@@ -83,5 +83,22 @@ position_size = float(portfolio_size)/len(final_dataframe.index)
 for i in range(0, len(final_dataframe)):
     final_dataframe.loc[i, 'Number of Shares to Buy '] = math.floor(position_size/final_dataframe.loc[i, 'Price'])
 
-print(final_dataframe)
+#print(final_dataframe)
+
+hqm_columns = [
+    'Ticker',
+    'Price',
+    'Number of Shares to Buy',
+    'One-Year price Return',
+    'One-Year Return Percentile',
+    'Six-Month Price Return',
+    'Six-Month Return Percentil',
+    'Three-Month Return Percentile',
+    'One-Month Price Return',
+    'One-Month Return Percentile'
+
+]
+hqm_dataframe = pd.DataFrame(columns = hqm_columns)
+#print(hqm_dataframe)
+
 
