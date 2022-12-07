@@ -59,5 +59,21 @@ for symbol_string in symbol_strings:
         )
 #print(final_dataframe)
 
-final_dataframe.sort_values('One-Year Price Return', ascending = False, inplace = True) #with the inplace method it will modeify the actual dataframe
-print(len(final_dataframe[:50]))
+final_dataframe.sort_values('One-Year Price Return', ascending = False, inplace = True) #sort the dataframe with "one year price return according to asecnding order so that highest momemtum stock will be on top
+# with the inplace method it will modify the original dataframe instead of giving us a temporary copy.
+final_dataframe = final_dataframe[:50] #modify the dataframe so it only contains 50 stocks with the highest momentum
+final_dataframe.reset_index(inplace = True)  #change the index so that it runs from 0-49
+#print(final_dataframe) #then we finally print out the final dataframe
+
+def portfolio_input():
+    global portfolio_size
+    portfolio_size = input('Enter the size of your portfolio:')
+
+    try:
+        float(portfolio_size)
+    except ValueError:
+        print('That is not a number! \nPLeasetry again:')
+        portfolio_size = input('Enter the size of your portfolio')
+
+print(portfolio_input())
+print(portfolio_size)
