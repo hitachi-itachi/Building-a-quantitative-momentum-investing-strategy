@@ -57,6 +57,7 @@ for symbol_string in symbol_strings:
                    ignore_index = True
 
         )
-print(final_dataframe)
+#print(final_dataframe)
 
-final_dataframe.sort_value('One-Year Price Return', ascending = False, inplace = True,) #with the inplace method it will modeify the actual dataframe
+final_dataframe.sort_values('One-Year Price Return', ascending = False, inplace = True) #with the inplace method it will modeify the actual dataframe
+print(len(final_dataframe[:50]))
