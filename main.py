@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import requests
 import math
-from scipy import stats #for percentile score calculation
+from scipy.stats import percentileofscore as score #for percentile score calculation
 import xlsxwriter
 
 stocks = pd.read_csv('sp_500_stocks.csv')
@@ -47,10 +47,8 @@ for symbol_string in symbol_strings:
                [
                    symbol,
                    data[symbol]['price'], #if we wrote the code to here we are going to have an error because the dataframe is expecting 4
-                   data[symbol]['stats']['year1ChangePercent'],                  #4 value and we are only getting two value.
-                   'N/A'
-
-
+                   data[symbol]['stats']['year1ChangePercent'],
+                   'N/A'#4 value and we are only getting two value.
 
                ],
                index = my_columns),
@@ -89,7 +87,7 @@ hqm_columns = [
     'Ticker',
     'Price',
     'Number of Shares to Buy',
-    'One-Year price Return',
+    'One-Year Price Return',
     'One-Year Return Percentile',
     'Six-Month Price Return',
     'Six-Month Return Percentile',
@@ -118,11 +116,36 @@ for symbol_string in symbol_strings:
                 'N/A',
                  data[symbol]['stats']['month1ChangePercent'],
                 'N/A'
+
             ],
             index = hqm_columns),
-            ignore_index = True
+            ignore_index = True #defintely has to be added when we are appending a pandas series
         )
 
-#print(hqm_dataframe)
+print(hqm_dataframe)
+print(data[symbol]['price'])
+
+time_periods = [
+    'One-Year',
+    'Six-Month',
+    'Three-Month',
+    'One-Month'
+]
+
+for row in hqm_dataframe.index:
+    for time_period in time_periods:
+        change_col = f'{time_period} Price Return'
+        percentile_col = f'{time_period} Return Pecentile'
+        if change_col in hqm_dataframe.columns and percentile_col in hqm_dataframe.columns:
+            hqm_dataframe.loc[row, f'{time_period} Return Percentile'] = score(hqm_dataframe[change_col],
+                                                                               hqm_dataframe.loc[row, percentile_col])      #this whole part is just populating data into new columns
+        else:
+            # Use a default value if the columns do not exist
+            hqm_dataframe.loc[row, f'{time_period} Return Percentile'] = 0
+       # hqm_dataframe.loc[row, percentile_col] = score(hqm_dataframe[change_col],hqm_dataframe.loc[row, change_col]) #first argument - the column we want o base our cal on, second argument entry from the percentile score we wanna calculate
+         #this takes two argument, the first is the entire column, the second is an entry from that column.
+
+
+print(hqm_dataframe)
 
 
