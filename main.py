@@ -92,13 +92,37 @@ hqm_columns = [
     'One-Year price Return',
     'One-Year Return Percentile',
     'Six-Month Price Return',
-    'Six-Month Return Percentil',
+    'Six-Month Return Percentile',
+    'Three-Month Price Return',
     'Three-Month Return Percentile',
     'One-Month Price Return',
     'One-Month Return Percentile'
 
 ]
 hqm_dataframe = pd.DataFrame(columns = hqm_columns)
+for symbol_string in symbol_strings:
+    batch_api_call_url = f'https://sandbox.iexapis.com/stable/stock/market/batch?symbols={symbol_string}&types=price,stats&token={IEX_CLOUD_API_TOKEN}'  # we wanna change it to sandbox url. we are looking at price and token endpoint
+    data = requests.get(batch_api_call_url).json()  # convert the data into json format
+    for symbol in symbol_string.split(','):
+        hqm_dataframe = hqm_dataframe.append(
+            pd.Series(
+            [
+                symbol,
+                data[symbol]['price'],
+                'N/A',
+                data[symbol]['stats']['year1ChangePercent'],
+                'N/A',
+                data[symbol]['stats']['month6ChangePercent'],
+                'N/A',
+                data[symbol]['stats']['month3ChangePercent'],
+                'N/A',
+                 data[symbol]['stats']['month1ChangePercent'],
+                'N/A'
+            ],
+            index = hqm_columns),
+            ignore_index = True
+        )
+
 #print(hqm_dataframe)
 
 
