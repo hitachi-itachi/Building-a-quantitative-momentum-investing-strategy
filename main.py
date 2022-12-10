@@ -3,6 +3,8 @@ import pandas as pd
 import requests
 import math
 from scipy.stats import percentileofscore as score #for percentile score calculation
+
+
 import xlsxwriter
 
 stocks = pd.read_csv('sp_500_stocks.csv')
@@ -43,16 +45,16 @@ for symbol_string in symbol_strings:
     #print(data['AAPL']['stats'])
     for symbol in symbol_string.split(","):  #for every ticker in this list, we want to append the releevant metricts to the final dataframe
             final_dataframe = final_dataframe.append(
-            pd.Series(
-               [
-                   symbol,
-                   data[symbol]['price'], #if we wrote the code to here we are going to have an error because the dataframe is expecting 4
-                   data[symbol]['stats']['year1ChangePercent'],
-                   'N/A'#4 value and we are only getting two value.
+                  pd.Series(
+                     [
+                        symbol,
+                        data[symbol]['price'], #if we wrote the code to here we are going to have an error because the dataframe is expecting 4
+                        data[symbol]['stats']['year1ChangePercent'],
+                        'N/A'#4 value and we are only getting two value.
 
-               ],
+                    ],
                index = my_columns),
-                   ignore_index = True
+               ignore_index = True
 
         )
 #print(final_dataframe)
@@ -95,6 +97,7 @@ hqm_columns = [
     'Three-Month Return Percentile',
     'One-Month Price Return',
     'One-Month Return Percentile'
+    'HQM Score'
 
 ]
 hqm_dataframe = pd.DataFrame(columns = hqm_columns)
@@ -138,14 +141,98 @@ for row in hqm_dataframe.index:
         percentile_col = f'{time_period} Return Pecentile'
         if change_col in hqm_dataframe.columns and percentile_col in hqm_dataframe.columns:
             hqm_dataframe.loc[row, f'{time_period} Return Percentile'] = score(hqm_dataframe[change_col],
-                                                                               hqm_dataframe.loc[row, percentile_col])      #this whole part is just populating data into new columns
+                                                                               hqm_dataframe.loc[
+                                                                                   row, percentile_col])  # this whole part is just populating data into new columns
         else:
             # Use a default value if the columns do not exist
             hqm_dataframe.loc[row, f'{time_period} Return Percentile'] = 0
-       # hqm_dataframe.loc[row, percentile_col] = score(hqm_dataframe[change_col],hqm_dataframe.loc[row, change_col]) #first argument - the column we want o base our cal on, second argument entry from the percentile score we wanna calculate
-         #this takes two argument, the first is the entire column, the second is an entry from that column.
-
+    # hqm_dataframe.loc[row, percentile_col] = score(hqm_dataframe[change_col],hqm_dataframe.loc[row, change_col]) #first argument - the column we want o base our cal on, second argument entry from the percentile score we wanna calculate
+    # this takes two argument, the first is the entire column, the second is an entry from that column.
 
 print(hqm_dataframe)
 
 
+from statistics import mean
+for row in hqm_dataframe.index: #loop over all the pandasdataframe row
+    momentum_percentiles = []  #reinstantiated our pandas dataframe
+    for time_period in time_periods:
+        momentum_percentiles.append(hqm_dataframe.loc[row, f'{time_period} Return Percentile'])
+    hqm_dataframe.loc[row, 'HQM Score'] = mean(momentum_percentiles)
+
+
+hqm_dataframe.sort_values(by = 'HQM Score', ascending = False)
+hqm_dataframe = hqm_dataframe[:51]
+
+
+portfolio_input()
+
+position_size = float(portfolio_size) / len(hqm_dataframe.index)
+
+for i in range(0, len(hqm_dataframe['Ticker'])-1):
+    hqm_dataframe.loc[i, 'Number of Shares to Buy'] = math.floor(position_size / hqm_dataframe['Price'][i])
+hqm_dataframe
+
+writer = pd.ExcelWriter('momentum_strategy.xlsx', engine='xlsxwriter')
+hqm_dataframe.to_excel(writer, sheet_name='Momentum Strategy', index = False)
+
+background_color = '#0a0a23'
+font_color = '#ffffff'
+
+string_template = writer.book.add_format(
+        {
+            'font_color': font_color,
+            'bg_color': background_color,
+            'border': 1
+        }
+    )
+
+dollar_template = writer.book.add_format(
+        {
+            'num_format':'$0.00',
+            'font_color': font_color,
+            'bg_color': background_color,
+            'border': 1
+        }
+    )
+
+integer_template = writer.book.add_format(
+        {
+            'num_format':'0',
+            'font_color': font_color,
+            'bg_color': background_color,
+            'border': 1
+        }
+    )
+
+percent_template = writer.book.add_format(
+        {
+            'num_format':'0.0%',
+            'font_color': font_color,
+            'bg_color': background_color,
+            'border': 1
+        }
+    )
+
+
+column_formats = {
+                    'A': ['Ticker', string_template],
+                    'B': ['Price', dollar_template],
+                    'C': ['Number of Shares to Buy', integer_template],
+                    'D': ['One-Year Price Return', percent_template],
+                    'E': ['One-Year Return Percentile', percent_template],
+                    'F': ['Six-Month Price Return', percent_template],
+                    'G': ['Six-Month Return Percentile', percent_template],
+                    'H': ['Three-Month Price Return', percent_template],
+                    'I': ['Three-Month Return Percentile', percent_template],
+                    'J': ['One-Month Price Return', percent_template],
+                    'K': ['One-Month Return Percentile', percent_template],
+                    'L': ['HQM Score', integer_template]
+                    }
+
+for column in column_formats.keys():
+    writer.sheets['Momentum Strategy'].set_column(f'{column}:{column}', 20, column_formats[column][1])
+    writer.sheets['Momentum Strategy'].write(f'{column}1', column_formats[column][0], string_template)
+
+
+
+writer.save()
